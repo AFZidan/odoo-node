@@ -1,0 +1,11 @@
+{
+    "editor.tabCompletion": "on",
+    "diffEditor.codeLens": true,
+    "cSpell.words": [
+        "Odoo"
+    ],
+    "eslint.alwaysShowStatus": true,
+    "eslint.format.enable": true,
+    "eslint.quiet": true,
+    "eslint.run": "onSave"
+}
