@@ -1,14 +1,14 @@
 {
   "name": "odoo-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "Odoo API integration for invoices and services",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Ahmed Zidan",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.0.3",
@@ -17,9 +17,6 @@
     "odoo-xmlrpc": "^1.0.8"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.7",
-    "@babel/eslint-parser": "^7.19.1",
-    "babel-eslint": "^10.1.0",
     "eslint": "^8.30.0"
   }
 }
