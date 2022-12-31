@@ -6,7 +6,7 @@ import { hasValidHmac } from './Auth.js';
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+const port = parseInt(process.env.PORT) || 3000;
 app.use(express.json());
 app.use('/api',hasValidHmac);
 app.use('/api', routes);
@@ -27,6 +27,6 @@ app.use((err, req, res, next) => {
 	return next();
 });
 
-app.listen(3000, () => {
-	console.log(`Server Started at ${3000}`);
+app.listen(port, () => {
+	console.log(`Server Started at ${port}`);
 });
