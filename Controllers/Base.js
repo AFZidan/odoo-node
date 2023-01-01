@@ -4,6 +4,7 @@ import Odoo from 'odoo-xmlrpc';
 export default class Base {
 	client;
 	connected = false;
+	model = null;
 
 	constructor () {
 		if(!process.env?.ODOO_HOST){
@@ -35,7 +36,6 @@ export default class Base {
 	}
 
 	async run (model, method, args = []) {
-		this.client.execute_kw;
 		return this.client.connect().then(() => {
 			const params = [];
 			params.push(args);
@@ -45,5 +45,29 @@ export default class Base {
 
 	async getFields (model) {
 		return this.run(model, 'fields_get', [[], ['string', 'type', 'searchable', 'required', 'readonly']]);
+	}
+
+	/**
+     *
+     * @param Array filter : [[key,operator,value]]
+     */
+	find (filter) {
+		if(typeof filter == 'number'){
+			filter= [['id', '=', filter]];
+		}
+		return this.run(this.model, 'search_read', [filter]).then(res => {
+			return res?.[0] || null;
+		});
+	}
+	
+	
+	/**
+		 *
+		 * @param Array filter : [[key,operator,value]]
+		 */
+	findAll (filter) {
+		return this.run(this.model, 'search_read', [filter]).then(res => {
+			return res || null;
+		});
 	}
 }

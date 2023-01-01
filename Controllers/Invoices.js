@@ -1,65 +1,58 @@
 import Base from './Base.js';
 import Customers from './Customers.js';
+import Products from './Products.js';
 export default class Invoices extends Base {
-	model = 'account.move';
-	async list (offset = 0, limit = 20, fields = []) {
-		// Get invoices ids list;
-		const ids = await this.getIdes(offset, limit);
-		if (!ids) {
-			return {
-				data: []
-			};
-		}
-		// Get invoice fields
-		if (!fields.length) {
-			const data = await this.getFields(this.model);
-			fields = Object.keys(data);
-		}
-		console.log('ids: ', ids);
-		console.log('fields: ', fields.length);
-		// Get invoices data
-		const params = [];
-		params.push(ids);
-		params.push(['name', 'ref', 'date', 'state']);
-		console.log('params: ', params);
-		return this.run(this.model, 'read', [[params]]).then(result => {
-			console.log('results: ', result);
-			return result;
-		});
+	constructor(){
+		super();
+		this.model ='account.move';
 	}
 
 	async create (req,res) {
 		const order = req.body;
-		const params = [];
-		if(!order?.customer){
-			return res.status(422).send({error:'Customer is required',code:422});
-		}
-		if(!order?.items || !order.items.length){
-			return res.status(422).send({error:'Order Items is required',code:422});
-		}
 		
-		const customer = await (new Customers).updateOrCreate([['email','=',order?.customer?.email]],order?.customer);
+		const customer = await this.getCustomer(order,res);
+		const products = await this.getProducts(order,res);
 		const lineEntries = [];
-		for(const item of order.items){
-			
-			lineEntries.push({
-				product_id:item.product_id,
-				quantity:item.quantity,
-				price_unit:item.price_unit,
-				name:item.name
-			});
+		
+		for (const item of order.items){
+			lineEntries.push([0,'',{
+				product_id: products.filter(product=>product.default_code === item.id)?.[0]?.id,
+				quantity:item?.quantity || 1,
+				price_unit:item?.price,
+				account_id:62,
+				move_type:'out_invoice',
+				name:item?.name,
+				tax_ids:[[6,false,[12]]]
+			}]);
 		}
+		const params = [];
 		params.push({
 			partner_id:customer.id,
+			ref:`order_${order.id}`,
+			payment_state:'paid',
+			invoice_line_ids:lineEntries,
 		});
-
-
-
-		const invoice = await this.run(this.model,'create',params);
+		
+		// Create the Invoice
+		const invoiceId =  await this.run(this.model,'create',params);
+		
+		// get invoice line ids
+		// await this.run('account.move.line', 'search', [[['move_id', '=', invoiceId]]]).then(async lineIds => {
+		// 	await this.run('account.move.line', 'write', [lineIds, {
+		// 		tax_ids:[[6,0,[13]]]}]);
+		// 	// this.run(this.model,'compute_taxes',[invoice]);
+		
+		// 	console.log('invoice line ids: ', lineIds);
+		// });
+		 // compute taxes 
+		// update the invoice state to posted
+		
+		this.run(this.model,'action_post',[invoiceId]);
+		
 		return res.send({
 			status: 'success',
 			message: 'Invoice created successfully',
-			data: invoice
+			data: invoiceId
 		});
 	}
 
@@ -74,5 +67,37 @@ export default class Invoices extends Base {
 		params.push(offset);
 		params.push(limit);
 		return this.run(this.model, 'search', params);
+	}
+
+
+	getCustomer(order,res){
+
+		// validate Order customer
+		if(!order?.customer){
+			return res.status(422).send({error:'Customer is required',code:422});
+		}
+		// create the customer if not exists
+		return (new Customers).updateOrCreate([['email','=',order?.customer?.email]],order?.customer);
+	}
+
+	async getProducts(order,res){
+
+		// validate the order items
+		if(!order?.items || !order.items.length){
+			return res.status(422).send({error:'Order Items is required',code:422});
+		}
+
+			
+		// get the products/services ids
+		const itemsIds = [['default_code','in',order.items.map(item=>item.id)]];
+		let products =await (new Products).findAll(itemsIds);
+		// create products/services if not exists
+		if(!products || !products.length || !products.length === order.items.length){
+			products = await (new Products).create(order.items);
+			products = await Promise.all(order.items.map(item=>{
+				return (new Products).updateOrCreate([['default_code','=',item.id]],item);
+			})).then(result=>result.map(item=>item.id));
+		}
+		return products;
 	}
 }

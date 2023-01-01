@@ -43,5 +43,3 @@ export const hasValidHmac = async (req, res, next) => {
 
   
 };
-
-// /Users/zidan/www/odoo-node/Auth.js

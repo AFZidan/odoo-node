@@ -1,35 +1,9 @@
 import Base from './Base.js';
 export default class Customers extends Base {
-	model = 'res.partner';
-	async list (req, res) {
-		console.log('created: ', 'testing');
-
-		// // Get invoices ids list;
-		// const ids = await this.getIdes(offset,limit);
-		// if(!ids){
-		//     return {
-		//         data:[],
-		//     };
-		// }
-		// // Get invoice fields
-		// if(!fields.length){
-		//     const data = await this.getFields(this.model);
-		//     fields =Object.keys(data)
-		// }
-		// console.log('ids: ',ids);
-		// console.log('fields: ',fields.length);
-		// // Get invoices data
-		// let params = [];
-		// params.push(ids);
-		// params.push(['name','ref','date','state']);
-		// console.log("params: ",params);
-		// return this.run(this.model, 'read',[[params]]).then(result=>{
-		//     console.log('results: ',result);
-		//     return result;
-		// });
-		return res.send('testing');
+	constructor(){
+		super();
+		this.model ='res.partner';
 	}
-
 	async create (data) {
 		const params = [];
 		// get country id by given country code.
@@ -72,7 +46,7 @@ export default class Customers extends Base {
      *
      * @param Array filter : [[key,operator,value]]
      */
-	getCustomer (filter) {
+	find (filter) {
 		return this.run(this.model, 'search_read', [filter]).then(res => {
 			return res?.[0] || null;
 		});
@@ -83,9 +57,8 @@ export default class Customers extends Base {
 			console.error('updateOrCreate: ', 'filter or data is not valid');
 			return null;
 		}
-		return this.run(this.model, 'search_read', [filter]).then(res => {
-			const customerData = res?.[0] || null;
-			if(!customerData){
+		return this.find(filter).then(customer => {
+			if(!customer){
 				return  this.create({
 					name: data.name,
 					email: data.email,
@@ -96,7 +69,7 @@ export default class Customers extends Base {
 					mobile: data?.mobile || '',
 				});
 			}
-			return customerData;
+			return customer;
 		});
 	}
 }
