@@ -16,13 +16,11 @@ export default class Invoices extends Base {
 		
 		for (const item of order.items){
 			lineEntries.push([0,'',{
-				product_id: products.filter(product=>product.default_code === item.id)?.[0]?.id,
+				product_id: products.filter(product=>`${product.default_code}` === `${item.id}`)?.[0]?.id,
 				quantity:item?.quantity || 1,
 				price_unit:item?.price,
-				account_id:62,
-				move_type:'out_invoice',
 				name:item?.name,
-				tax_ids:[[6,false,[12]]]
+				// tax_ids:[[6,false,[12]]]
 			}]);
 		}
 		const params = [];
@@ -31,21 +29,11 @@ export default class Invoices extends Base {
 			ref:`order_${order.id}`,
 			payment_state:'paid',
 			invoice_line_ids:lineEntries,
+			move_type:'out_invoice',
 		});
 		
 		// Create the Invoice
 		const invoiceId =  await this.run(this.model,'create',params);
-		
-		// get invoice line ids
-		// await this.run('account.move.line', 'search', [[['move_id', '=', invoiceId]]]).then(async lineIds => {
-		// 	await this.run('account.move.line', 'write', [lineIds, {
-		// 		tax_ids:[[6,0,[13]]]}]);
-		// 	// this.run(this.model,'compute_taxes',[invoice]);
-		
-		// 	console.log('invoice line ids: ', lineIds);
-		// });
-		 // compute taxes 
-		// update the invoice state to posted
 		
 		this.run(this.model,'action_post',[invoiceId]);
 		
