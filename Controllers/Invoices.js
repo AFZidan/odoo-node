@@ -23,6 +23,15 @@ export default class Invoices extends Base {
 				// tax_ids:[[6,false,[12]]]
 			}]);
 		}
+		
+		//add a discount if provided
+		if(order?.discount){
+			lineEntries.push([0,'',{
+				name: order?.discount?.name || 'discount',
+				price_unit:(order?.discount?.value || 0) * -1,
+				tax_ids:[]
+			}]);
+		}
 		const params = [];
 		params.push({
 			partner_id:customer.id,

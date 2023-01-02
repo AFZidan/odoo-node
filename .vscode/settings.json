@@ -7,5 +7,6 @@
     "eslint.alwaysShowStatus": true,
     "eslint.format.enable": true,
     "eslint.quiet": true,
-    "eslint.run": "onSave"
+    "eslint.run": "onSave",
+    "jshint.enable": false
 }
