@@ -12,7 +12,7 @@ export default class Products extends Base {
 			default_code:data.id,
 		};
 		params.push(product);
-		const id =  this.run(this.model, 'create', params);
+		const id =  await this.run(this.model, 'create', params);
 		product.id = id;
 		return product;
 	}
