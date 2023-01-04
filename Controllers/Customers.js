@@ -24,7 +24,7 @@ export default class Customers extends Base {
 			type: 'contact'
 		};
 		params.push(customerData);
-		const id =  this.run(this.model, 'create', params);
+		const id =  await this.run(this.model, 'create', params);
 		customerData.id = id;
 		return customerData;
 	}

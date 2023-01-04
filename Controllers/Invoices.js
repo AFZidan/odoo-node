@@ -19,11 +19,11 @@ export default class Invoices extends Base {
 				product_id: products.filter(product=>`${product.default_code}` === `${item.id}`)?.[0]?.id,
 				quantity:item?.quantity || 1,
 				price_unit:item?.price,
-				name:item?.name,
+				name:item?.name
 				// tax_ids:[[6,false,[12]]]
 			}]);
 		}
-		
+
 		//add a discount if provided
 		if(order?.discount){
 			lineEntries.push([0,'',{
@@ -33,8 +33,16 @@ export default class Invoices extends Base {
 			}]);
 		}
 		const params = [];
+		// create account.journal
+		// const journal_id = await this.run('account.journal', 'create', [{
+		// 	'name': 'Sales Journal',
+		// 	'code': 'SALES',
+		// 	'type':'sale',
+		// }]);
 		params.push({
 			partner_id:customer.id,
+			// journal_id:journal_id,
+			// company_id:1,
 			ref:`order_${order.id}`,
 			payment_state:'paid',
 			invoice_line_ids:lineEntries,
