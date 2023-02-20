@@ -1,5 +1,5 @@
 import Base from './Base.js';
-import Customers from './Customers.js';
+import Partners from './Partners.js';
 import Products from './Products.js';
 export default class Invoices extends Base {
 	constructor(){
@@ -11,6 +11,7 @@ export default class Invoices extends Base {
 		const order = req.body;
 		
 		const customer = await this.getCustomer(order,res);
+		const company = await this.getCompany(order,res);
 		const products = await this.getProducts(order,res);
 		const lineEntries = [];
 		
@@ -19,7 +20,10 @@ export default class Invoices extends Base {
 				product_id: products.filter(product=>`${product.default_code}` === `${item.id}`)?.[0]?.id,
 				quantity:item?.quantity || 1,
 				price_unit:item?.price,
-				name:item?.name
+				name:item?.name,
+				account_id:company.account_id,
+				// use current date for due date
+				date_maturity: new Date().toISOString().split('T')[0],// format: 'YYYY-MM-DD',
 				// tax_ids:[[6,false,[12]]]
 			}]);
 		}
@@ -33,20 +37,17 @@ export default class Invoices extends Base {
 			}]);
 		}
 		const params = [];
-		// create account.journal
-		// const journal_id = await this.run('account.journal', 'create', [{
-		// 	'name': 'Sales Journal',
-		// 	'code': 'SALES',
-		// 	'type':'sale',
-		// }]);
+		
 		params.push({
 			partner_id:customer.id,
-			// journal_id:journal_id,
-			// company_id:1,
+			journal_id:company.journal_id,
+			company_id:company.id,
 			ref:`order_${order.id}`,
 			payment_state:'paid',
 			invoice_line_ids:lineEntries,
 			move_type:'out_invoice',
+			// use current date for due date
+			invoice_date: new Date().toISOString().split('T')[0]
 		});
 		
 		// Create the Invoice
@@ -82,7 +83,16 @@ export default class Invoices extends Base {
 			return res.status(422).send({error:'Customer is required',code:422});
 		}
 		// create the customer if not exists
-		return (new Customers).updateOrCreate([['email','=',order?.customer?.email]],order?.customer);
+		return (new Partners).updateOrCreate([['email','=',order?.customer?.email]],order?.customer);
+	}
+	getCompany(order,res){
+
+		// validate Order Company
+		if(!order?.vendor){
+			return res.status(422).send({error:'The Service provider is required',code:422});
+		}
+		// create the customer if not exists
+		return (new Partners).updateOrCreate([['email','=',order?.vendor?.email]],order?.vendor,true);
 	}
 
 	async getProducts(order,res){
